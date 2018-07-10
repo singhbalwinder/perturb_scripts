@@ -1,0 +1,7 @@
+*.png
+av1c-04p_scripts/ne4/end_pts_all
+av1c-04p_scripts/ne4/log
+log
+paper_scripts/del_tmp
+paper_scripts/rlog
+*.pyc
