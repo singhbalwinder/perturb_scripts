@@ -22,9 +22,9 @@ def rmse_diff_var(ifile_test, ifile_cntl,  var_list, var_suffix, rmse_or_diff ):
    fcntl = Dataset(ifile_cntl, mode='r')
 
    diff = np.zeros(shape=(len(var_list)))#
-   i = 0
+   icnt = 0
    if (rmse_or_diff == 1):
-      is_se = (len(ftest.variables[var_suffix+var_list[i]].dimensions)==3) # see if it is SE grid
+      is_se = (len(ftest.variables[var_suffix+var_list[icnt]].dimensions)==3) # see if it is SE grid
       nz = 1
    else:
       eps = 1.e-16
@@ -38,16 +38,20 @@ def rmse_diff_var(ifile_test, ifile_cntl,  var_list, var_suffix, rmse_or_diff ):
 
          if(rmse_or_diff == 0):
             tmp  = np.amax(abs(vtest[...] - vcntl[...]), axis=None, out=None, keepdims=False)
-            diff[i] = max([tmp,eps])
+            diff[icnt] = max([tmp,eps])
          else:
             #reshape for RMSE
             if(is_se ):
                nx, ny = vtest.shape #shape will be same for both arrays
             else:
                nx, ny, nz = vtest.shape #shape will be same for both arrays
-            diff[i]  = sqrt(mean_squared_error(vtest.reshape((nx,ny*nz)), vcntl.reshape((nx,ny*nz))))
-         #print(str(var)+":"+str(diff[i]))
-         i += 1
+            diff[icnt]  = sqrt(mean_squared_error(vtest.reshape((nx,ny*nz)), vcntl.reshape((nx,ny*nz))))
+
+         #normalize by mean values of the field in the control case
+         diff[icnt] = diff[icnt]/np.mean(vcntl)
+         #print(np.mean(vcntl))
+         #print(str(var)+":"+str(diff[icnt]))
+         icnt += 1
          vtest = None
          vcntl = None
          var   = None
