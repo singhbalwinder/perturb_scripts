@@ -8,6 +8,7 @@ import pylab as pl
 import numpy as np
 import sys
 import pdb
+import os
 
 #-------------------------------------------------------
 # Some flags to control script behavior
@@ -32,34 +33,18 @@ cmn_path = '/pic/projects/climate/sing201/acme1/other_machs/other_machines_pertu
 # "flag to inclide or not" is a flag with decides whether to include it(=1) in comparison
 # or not (=0).
 #-------------------------------------------------------
-cntl_case = {'cori/ne30_fc5_default_cori_knl_int':[1,'Cori KNL(Intel O0)']} #flag to include in plotting or not is not used for control case
+cntl_case = {'titan/ne30_fc5_dbg_titan_int_unsrtcol':[1,'Titan(Intel-DBG)']} #flag to include in plotting or not is not used for control case
 
-tst_cases = {'constance/csmruns/ne30_fc5_cldfrc_dp1_0.14_const_int':[0,'PAR(dp1=0.14) '], \
-                'constance/csmruns/ne30_fc5_code_mod_dm_const_int':[0,'MOD(DM) '], \
-                'constance/csmruns/init_r8_ne30_fc5_code_mod_p_const_int':[0,'Init r8 MOD(P)'], \
-                'constance/csmruns/all_r8_ne30_fc5_code_mod_p_const_int':[0,'ALL r8 MOD(P)'], \
-                'constance/csmruns/ne30_fc5_code_mod_p_const_int':[0,'MOD(P) '] \
+tst_cases = {'titan/ne30_fc5_ndbg_titan_int_unsrtcol':[0,'Titan(Intel-NDBG)'], \
+                'cori/ne30_fc5_ndbg_cori_has_int_unsrtcol':[0,'Cori Has(Intel-NDBG)'], \
+                'cori/ne30_fc5_ndbg_cori_knl_int_unsrtcol':[0,'Cori KNL(Intel-NDBG)'] \                
             }
 
-cld_cases = {'cori/ne30_fc5_default_nondbg_cori_has_int':[0,'Cori Haswell(Intel O2)'], \
-                'cori/ne30_fc5_default_cori_has_int':[0,'Cori Haswell(Intel O0)'],\
-                'cori/ne30_fc5_default_nondbg_cori_knl_int':[0,'Cori KNL(Intel O2)'], \
-                'cori/ne30_fc5_default_cori_has_gnu':[0,'Cori Haswell (GNU O0)'], \
-                'cori/ne30_fc5_default_nondbg_cori_has_gnu':[0,'Cori Haswell(GNU O2)'], \
-                'cori/experiments/just_o0_ne30_fc5_default_nondbg_cori_has_int':[0,'Cori Haswell (Intel O2->O0-NDBG FLG)'], \
-                'cori/experiments/o2_w_dbg_flg_ne30_fc5_default_nondbg_cori_has_int':[0,'Cori Haswell(Intel O0->O2-DBG FLG)'], \
-                'constance/csmruns/ne30_fc5_default_nondebug_const_int':[0,'Constance(Intel O2)'], \
-                'constance/csmruns/ne30_fc5_default_const_int':[0,'Constance(Intel O0)'], \
-                'eos/ne30_fc5_default_nondebug_eos_int':[1,'EOS(Intel O2)'], \
-                'titan/ne30_fc5_default_nondebug_titan_int_18_0_1_163_compiler':[0,'Titan(Intel O2_163)'], \
-                'titan/ne30_fc5_default_titan_int':[0,'Titan(Intel O0_163)'], \
-                'titan/ne30_fc5_default_nondebugtitan_int':[0,'Titan(Intel O2)'], \
-                'titan/ne30_fc5_default_nondebug_titan_pgi':[1,'Titan(PGI O2)'], \
-                'titan/ne30_fc5_default_titan_pgi':[0,'Titan(PGI O0)'], \
-                'cascade/csmruns/ne30_fc5_default_cas_int':[0,'Cascade(Intel O0)'], \
-                'cascade/csmruns/ne30_fc5_default_nondebug_cas_int':[0,'Cascade(Intel O2)'], \
-                'eos/ne30_fc5_default_eos_int':[0,'EOS(Intel O0)'] \
-                }
+cld_cases = {'titan/ne30_fc5_ndbg_titan_pgi_unsrtcol':[1,'Titan(PGI-NDBG) '], \
+                'titan/ne30_fc5_dbg_titan_pgi_unsrtcol':[1,'Titan(PGI-DBG) '], \
+                'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol':[1,'Constance (Intel-DBG)'], \
+                'constance/csmruns/ne30_fc5_ndbg_const_int_unsrtcol':[1,'Constance (Intel-NDBG)'] \
+            }
 
 rmse_or_diff   = 1 #0: DIFF 1: RMSE
 
@@ -78,7 +63,7 @@ xlabel_file = 'xlabels_fc5_no_none.txt'
 if(rmse_or_diff == 0):
    ylabel = 'Maximum Error in the temperature (K) field'
 elif(rmse_or_diff == 1):
-   ylabel = 'RMSE Error [T(K)]'
+   ylabel = 'Normalized RMSE Error [T(K)]'
 
 ymin  = -1
 ymax  = 10.0
@@ -167,6 +152,14 @@ def compute_res(icase,ival,case_typ):
             ax.set_xlim([xmin,xmax])
             ax.set_xticks(range(xmin, xmax))
             ax.set_xticklabels(xlabels, rotation=40, ha='left', fontsize=15, multialignment='right')
+         else:
+            if ( not os.path.isfile(ifile)):
+               print('Test file:'+ifile+' doesnt exists; exiting....')
+               sys.exit()
+            if ( not os.path.isfile(ifile_cntl)):
+               print('Test file:'+ifile_cntl+' doesnt exists; exiting....')
+               sys.exit()
+
    cld_ires += 1
    tst_ires += 1
    iclr += 1
@@ -231,9 +224,44 @@ if (not chk_file_only) :
    labels, ids = np.unique(labels, return_index=True)
    handles = [handles[i] for i in ids]
    pl.legend(handles, labels, loc='best')#, fontsize = 35)
+   pl.ylabel(ylabel)
+   pl.title(title)
    pl.show()
 else:
     print("ALL files are present")
 
 ############ extra codes
 #clr   = [[1.0,0.4,0.6],'c','g','r','m','b','k','y',[1,0.4,0.8],[0.4,0.4,0.4],[0.6,0.5,0.4],[0.7,0.5,0.8],[0.6,0.9,0.4],[0.2,0.5,1.0],[0.7,1.0,0.4]] # for each case
+
+#old cases:
+# cntl_case = {'cori/ne30_fc5_default_cori_knl_int':[1,'Cori KNL(Intel O0)']} #flag to include in plotting or not is not used for control case
+
+# tst_cases = {'constance/csmruns/ne30_fc5_cldfrc_dp1_0.14_const_int':[0,'PAR(dp1=0.14) '], \
+#                 'constance/csmruns/ne30_fc5_code_mod_dm_const_int':[0,'MOD(DM) '], \
+#                 'constance/csmruns/init_r8_ne30_fc5_code_mod_p_const_int':[0,'Init r8 MOD(P)'], \
+#                 'constance/csmruns/all_r8_ne30_fc5_code_mod_p_const_int':[0,'ALL r8 MOD(P)'], \
+#                 'constance/csmruns/ne30_fc5_code_mod_p_const_int':[0,'MOD(P) '], \
+#                 'titan/ne30_fc5_def_ndbg_titan_pgi_unsort_cols':[1,'Titan(PGI-O2-unsort)'], \
+#                 'titan/ne30_fc5_def_ndbg_titan_int_1801163_cmplr_unsort_cols':[1,'Titan(Intel-O2-unsort)'] \
+#             }
+
+# cld_cases = {'cori/ne30_fc5_default_nondbg_cori_has_int':[0,'Cori Haswell(Intel O2)'], \
+#                 'cori/ne30_fc5_default_cori_has_int':[0,'Cori Haswell(Intel O0)'],\
+#                 'cori/ne30_fc5_default_nondbg_cori_knl_int':[0,'Cori KNL(Intel O2)'], \
+#                 'cori/ne30_fc5_default_cori_has_gnu':[0,'Cori Haswell (GNU O0)'], \
+#                 'cori/ne30_fc5_default_nondbg_cori_has_gnu':[0,'Cori Haswell(GNU O2)'], \
+#                 'cori/experiments/just_o0_ne30_fc5_default_nondbg_cori_has_int':[0,'Cori Haswell (Intel O2->O0-NDBG FLG)'], \
+#                 'cori/experiments/o2_w_dbg_flg_ne30_fc5_default_nondbg_cori_has_int':[0,'Cori Haswell(Intel O0->O2-DBG FLG)'], \
+#                 'constance/csmruns/ne30_fc5_default_nondebug_const_int':[1,'Constance(Intel O2)'], \
+#                 'constance/csmruns/ne30_fc5_default_const_int':[0,'Constance(Intel O0)'], \
+#                 'eos/ne30_fc5_default_nondebug_eos_int':[1,'EOS(Intel O2)'], \
+#                 'titan/ne30_fc5_default_nondebug_titan_int_18_0_1_163_compiler':[0,'Titan(Intel O2_163)'], \
+#                 'titan/ne30_fc5_default_titan_int':[0,'Titan(Intel O0_163)'], \
+#                 'titan/ne30_fc5_default_nondebugtitan_int':[0,'Titan(Intel O2)'], \
+#                 'titan/ne30_fc5_default_nondebug_titan_pgi':[0,'Titan(PGI O2)'], \
+#                 'titan/ne30_fc5_default_titan_pgi':[0,'Titan(PGI O0)'], \
+#                 'cascade/csmruns/ne30_fc5_default_cas_int':[0,'Cascade(Intel O0)'], \
+#                 'cascade/csmruns/ne30_fc5_default_nondebug_cas_int':[0,'Cascade(Intel O2)'], \
+#                 'eos/ne30_fc5_default_eos_int':[0,'EOS(Intel O0)'] \
+#                 }
+
