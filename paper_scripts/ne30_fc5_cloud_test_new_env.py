@@ -4,12 +4,14 @@
 
 import ntpath
 from rmse_diff_var import rmse_diff_var
+from time import ctime
 import pylab as pl
 import numpy as np
 import sys
 import pdb
 import os
 
+print(ctime())
 #-------------------------------------------------------
 # Some flags to control script behavior
 #-------------------------------------------------------
@@ -18,7 +20,13 @@ import os
 chk_file_only = False
 
 #use only one inital condition file to produce plots faster
-single_inic = False
+single_inic = True
+
+#time step for history file
+time           = '00000'
+
+#suffix for variables to plot
+pltvar_sfx = 'T_'
 
 #-------------------------------------------------------
 # Paths and test cases to plot
@@ -35,15 +43,21 @@ cmn_path = '/pic/projects/climate/sing201/acme1/other_machs/other_machines_pertu
 #-------------------------------------------------------
 cntl_case = {'titan/ne30_fc5_dbg_titan_int_unsrtcol':[1,'Titan(Intel-DBG)']} #flag to include in plotting or not is not used for control case
 
-tst_cases = {'titan/ne30_fc5_ndbg_titan_int_unsrtcol':[0,'Titan(Intel-NDBG)'], \
-                'cori/ne30_fc5_ndbg_cori_has_int_unsrtcol':[0,'Cori Has(Intel-NDBG)'], \
-                'cori/ne30_fc5_ndbg_cori_knl_int_unsrtcol':[0,'Cori KNL(Intel-NDBG)'] \                
+tst_cases = { 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_dstfac_p45':[1,'Constance (Intel-DUST)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_sol_factb_int_1p0':[1,'Constance (Intel-sol_fctb)'] \
             }
 
-cld_cases = {'titan/ne30_fc5_ndbg_titan_pgi_unsrtcol':[1,'Titan(PGI-NDBG) '], \
+cld_cases = {'cori/ne30_fc5_ndbg_cori_has_int_unsrtcol':[1,'Cori Has(Intel-NDBG)'], \
+                'cori/ne30_fc5_ndbg_cori_knl_int_unsrtcol':[1,'Cori KNL(Intel-NDBG)'], \
+                'cori/ne30_fc5_ndbg_cori_has_gnu_unsrtcol':[1,'Cori Has(GNU-NDBG)'], \
+                'cori/ne30_fc5_dbg_cori_has_int_unsrtcol':[1,'Cori Has(Intel-DBG)'], \
+                'cori/ne30_fc5_dbg_cori_knl_int_unsrtcol':[1,'Cori KNL(Intel-DBG)'], \
+                'cori/ne30_fc5_dbg_cori_has_gnu_unsrtcol':[1,'Cori Has(GNU-DBG)'], \
+                'titan/ne30_fc5_ndbg_titan_int_unsrtcol':[1,'Titan(Intel-NDBG)'], \
+                'titan/ne30_fc5_ndbg_titan_pgi_unsrtcol':[1,'Titan(PGI-NDBG) '], \
                 'titan/ne30_fc5_dbg_titan_pgi_unsrtcol':[1,'Titan(PGI-DBG) '], \
-                'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol':[1,'Constance (Intel-DBG)'], \
-                'constance/csmruns/ne30_fc5_ndbg_const_int_unsrtcol':[1,'Constance (Intel-NDBG)'] \
+                'constance/csmruns/ne30_fc5_ndbg_const_int_unsrtcol':[1,'Constance (Intel-NDBG)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol':[1,'Constance (Intel-DBG)'] \
             }
 
 rmse_or_diff   = 1 #0: DIFF 1: RMSE
@@ -51,7 +65,6 @@ rmse_or_diff   = 1 #0: DIFF 1: RMSE
 #history files related info to form file names in a loop
 acme_hist_dir  = 'run'
 cam_hist_str   = '.cam.h0.'
-time           = '00000'
 perturb_str    = ['wopert','pospert','negpert']
 
 #other files needed
@@ -82,6 +95,19 @@ imrk = 0
 #===================================================
 # Functions
 #===================================================
+
+def check_fix_min(output):
+   if(all(iout <= 0.0 for iout in output)):
+      print("All diffs are <= zero , reseting last element to 1e-16")
+      output[-1] = 1.e-16
+
+      for iout in output:
+         if(iout <= 0.0 ):
+            print("Diff/RMSE is <= zero , reseting element to 1e-16")
+            output[iout] = 1.e-16            
+   return output
+
+
 def compute_res(icase,ival,case_typ):
    global cld_ires, tst_ires, iclr, imrk 
 
@@ -132,15 +158,23 @@ def compute_res(icase,ival,case_typ):
          ifile_cntl = ipath_cntl+'/'+tmp_case_name_cntl+'/'+acme_hist_dir+'/'+tmp_case_name_cntl+cam_hist_str+acond_2+'-'+time+'.nc'
          if(not chk_file_only):
             if(case_typ == 'cloud'):
-               cld_res[cld_ires,icond,ipert,0:len(var_list)]  = rmse_diff_var(ifile, ifile_cntl, var_list, 'T_',rmse_or_diff)
+               output_tmp = rmse_diff_var(ifile, ifile_cntl, var_list, pltvar_sfx,rmse_or_diff)
+               output     = check_fix_min(output_tmp)
+               cld_res[cld_ires,icond,ipert,0:len(var_list)]  = output
                ax.semilogy(cld_res[cld_ires,icond,ipert,:],color=clr[iclr],linestyle='-',marker=mrk[imrk],label=ival[1], linewidth = 2, alpha = 0.7) 
+
+               #find min max for cloud hashed region
+               for iout in range(len(var_list)):
+                  if(mncld[iout] > output[iout]):
+                     mncld[iout] = output[iout]
+                  if(mxcld[iout] < output[iout]):
+                     mxcld[iout] = output[iout]                     
             else:
-               tst_res[tst_ires,icond,ipert,0:len(var_list)]  = rmse_diff_var(ifile, ifile_cntl, var_list, 'T_',rmse_or_diff)         
+               output_tmp  = rmse_diff_var(ifile, ifile_cntl, var_list, pltvar_sfx,rmse_or_diff)         
+               output     = check_fix_min(output_tmp)
+               tst_res[tst_ires,icond,ipert,0:len(var_list)]  = output
                ax.semilogy(tst_res[tst_ires,icond,ipert,:],color=clr[iclr],linestyle='-',marker=mrk[imrk],label=ival[1], linewidth = 2, alpha = 0.7) 
 
-            #if(all(iresult <= 0.0 for iresult in res[ires,icond,ipert,0:len(var_list)])):
-            #   print("All diffs are <= zero , reseting last element to 1e-16["+apert+" ]")
-            #   res[ires,icond,ipert,len(var_list)-1] = 1.e-16
             #icnt = 0
             #for iresult in res[ires,icond,ipert,0:len(var_list)]:
             #   if(iresult <= 0.0 ):
@@ -159,17 +193,16 @@ def compute_res(icase,ival,case_typ):
             if ( not os.path.isfile(ifile_cntl)):
                print('Test file:'+ifile_cntl+' doesnt exists; exiting....')
                sys.exit()
+   if(case_typ == 'cloud'):
+      cld_ires += 1
+   else:
+      tst_ires += 1
 
-   cld_ires += 1
-   tst_ires += 1
    iclr += 1
    if (iclr == len(clr) - 1):
       imrk += 1
       iclr  = 0
 
-
-
-min_all = float("inf")
 
 #get list of variable suffix
 with open(var_file, 'r') as fvar:
@@ -192,6 +225,11 @@ finic.close()
 if(single_inic):
    inic_list = inic_list[0:1] 
 
+mncld = np.empty(len(var_list))
+mxcld = np.empty(len(var_list))
+mncld.fill(float("inf"))
+mxcld.fill(float("-inf"))
+
 
 #create an empty array with dims[# of tst_cases, # of inic conds, # of perts, # of check point vars]
 tst_res = np.empty([len(tst_cases),len(inic_list),len(perturb_str),len(var_list)])
@@ -207,7 +245,6 @@ cntl_casename = ntpath.basename(ipath_cntl)
 
 print('Control case is: '+cntl_casename)
 #Loop through each case and prepare P+ and P- curves
-#for icase in range(0,len(tst_cases)):
 
 #pdb.set_trace()
 for icase_pth, ival in cld_cases.iteritems():
@@ -220,12 +257,20 @@ for icase_pth, ival in tst_cases.iteritems():
 
 if (not chk_file_only) :
    print("Plots are being generated...")
+   print(ctime())
+   ax.fill_between(range(xmin, xmax), mncld, mxcld, facecolor='gray', lw=0, alpha=0.5 )
+   print(xmin)
+   print(xmax)
+
+   print(mncld)
+   print(mxcld)
    handles, labels = pl.gca().get_legend_handles_labels()
    labels, ids = np.unique(labels, return_index=True)
    handles = [handles[i] for i in ids]
    pl.legend(handles, labels, loc='best')#, fontsize = 35)
    pl.ylabel(ylabel)
-   pl.title(title)
+   pl.title(title)   
+   pl.savefig('data.png') 
    pl.show()
 else:
     print("ALL files are present")

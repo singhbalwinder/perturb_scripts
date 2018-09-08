@@ -20,21 +20,16 @@ import pdb
 ###
 
 cmn_path  = '/pic/scratch/sing201/csmruns/'
-cntl_case = ['ne4_av1c_dvrg_issue_09062018_nopert']
-test_case = ['ne4_av1c_dvrg_issue_09062018_pospert']
+case_name = 'SLR.ne4_ne4.FC5AV1C-L.constance_intel.G.slr1'
+cntl_case = '.cam_0001.h0.0001-01-01-00000_woprt.nc'
+test_case = '.cam_0002.h0.0001-01-01-00000_posprt.nc'
 rmse_or_diff   = 1 #0: DIFF 1: RMSE
 
 #history files related info
 hist_path_str  = 'run/'  #'run/' #'run/regrided/regrided_'
-cam_hist_str   = '.cam.h0.'
-suffix         = '.nc'
-year           = '0001' #year  is a str as I don't anticipate that it will change
-month          = '01'   #month is a str as I don't anticipate that it will change
-day            = '01'   #day   is a str as I don't anticipate that it will change
-ts             = '00000' #'07200'#'01800'
 
 #other files needed
-var_file       = cmn_path+"".join(cntl_case)+ '/run/pergro_ptend_names.txt' #'physup_calls_fc5.txt' #'physup_calls_av1c.txt'
+var_file       = cmn_path+'/'+case_name+ '/run/pergro_ptend_names.txt' #'physup_calls_fc5.txt' #'physup_calls_av1c.txt'
 
 #plot related info
 xlabel_file = var_file #'pergro_ptend_names.txt' #'xlabels_fc5.txt' #'xlabels_av1c.txt'
@@ -98,10 +93,6 @@ def rmse_diff_var(ifile_test, ifile_cntl,  var_list, var_suffix, rmse_or_diff ):
 
 #Functions ENDS!!!
 
-if(len(cntl_case) != len(test_case)):
-   print('Length of cntl_case and test_case is not same; cntl_case='+str(len(cntl_case))+' test_case='+str(len(test_case)))
-   sys.exit()
-
 #get list of variable suffix
 with open(var_file, 'r') as fvar:
    var_list = fvar.readlines()
@@ -118,25 +109,21 @@ ax = pl.gca()
 axf = pl.gcf()
 axf.set_facecolor('white') #set color of the plot
 #ax.set_title(title, fontsize=15)
-fn_cmn  = cam_hist_str+year + '-' + month + '-' + str(day) + '-'+ ts+suffix
 
-for icase in range(0,len(test_case)):
-   fn_cntl = cntl_case[icase] + fn_cmn
-   fn_test = test_case[icase] + fn_cmn
+
+
    
-   fn_path_test = cmn_path+'/'+test_case[icase]+'/'+hist_path_str+fn_test
-   fn_path_cntl = cmn_path+'/'+cntl_case[icase]+'/'+hist_path_str+fn_cntl
-   print(fn_path_test)
-   print(fn_path_cntl)
-   res         = rmse_diff_var(fn_path_test,fn_path_cntl,var_list,'t_',rmse_or_diff)
-   print(res)
-   #pdb.set_trace()
+fn_path_test = cmn_path+'/'+case_name+'/'+hist_path_str+'/'+case_name+test_case
+fn_path_cntl = cmn_path+'/'+case_name+'/'+hist_path_str+'/'+case_name+cntl_case
+res         = rmse_diff_var(fn_path_test,fn_path_cntl,var_list,'t_',rmse_or_diff)
+print(res)
+#pdb.set_trace()
    
 nzeroind = np.nonzero(res)[0]
 res_nzero = res[[nzeroind]]
 xlabels_nzero = [xlabels[i] for i in nzeroind]
 
-ax.semilogy(res_nzero,color=clr[icase],linestyle='-',marker='.',label=lgnds[icase], linewidth=1)
+ax.semilogy(res_nzero,linestyle='-',marker='.',linewidth=1)
 
 ax.set_xlim([0,len(res_nzero)])
 ax.set_xticks(range(0,len(res_nzero)))
