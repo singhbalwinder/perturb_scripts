@@ -2,7 +2,6 @@
 #SBATCH  --job-name=python
 #SBATCH  --nodes=1
 #SBATCH  --output=python_scr.%j
-#SBATCH  --exclusive
 #SBATCH --output=out.slurm
 #SBATCH --error=err.slurm
 #SBATCH -t 00:30:00

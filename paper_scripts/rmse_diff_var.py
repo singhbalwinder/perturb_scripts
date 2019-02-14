@@ -72,7 +72,18 @@ def rmse_diff_var(ifile_test, ifile_cntl,  var_list, var_suffix, rmse_or_diff, i
 
 
          #normalize by mean values of the field in the control case
-         diff[icntvar] = diff[icntvar]/np.mean(vcntl)
+         mean_cntl = np.mean(vcntl)
+         if(mean_cntl != 0.0):
+            diff[icntvar] = diff[icntvar]/mean_cntl
+         else:
+            diff[icntvar] = 0.0
+            # if mean is zero, we assume all vcntl values are zero. If they are not
+            # that means it has equal no. of +ve and -ve values, which is rare and unusal
+            # so STOP the script!
+            if(vcntl.all()!=0.0):
+               print("mean of cntl var is zero but not all values are zero. Exiting.....")
+               sys.exit()
+
          icntvar += 1
          vtest = None
          vcntl = None

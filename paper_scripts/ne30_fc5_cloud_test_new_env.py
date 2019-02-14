@@ -26,7 +26,7 @@ single_inic = True
 time           = '00000'
 
 #suffix for variables to plot
-pltvar_sfx = 'T_'
+pltvar_sfx = 'NUM_A3_'
 
 #-------------------------------------------------------
 # Paths and test cases to plot
@@ -37,26 +37,33 @@ cmn_path = '/pic/projects/climate/sing201/acme1/other_machs/other_machines_pertu
 
 #-------------------------------------------------------
 # cases (cntl_case,tst_cases,cld_cases) are control case, test case and cases to form clouds.
-# They are organized like {machine name}/{case name}:[flag to inclide in plotting or not, legend]
+# They are organized like {machine name}/{case name}:[flag to include in plotting or not, legend]
 # "flag to inclide or not" is a flag with decides whether to include it(=1) in comparison
 # or not (=0).
 #-------------------------------------------------------
 cntl_case = {'titan/ne30_fc5_dbg_titan_int_unsrtcol':[1,'Titan(Intel-DBG)']} #flag to include in plotting or not is not used for control case
 
-tst_cases = { 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_dstfac_p45':[1,'Constance (Intel-DUST)'], \
-                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_sol_factb_int_1p0':[1,'Constance (Intel-sol_fctb)'] \
+tst_cases = { 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_dstfac_p45':[0,'Constance (Intel-DUST)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_sol_factb_int_1p0':[0,'Constance (Intel-sol_fctb)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_zmconv_c0_ocn_0p0035':[0,'Constance (Intel-zmconv_c0_ocn)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_zmconv_c0_lnd_0p0035':[0,'Constance (Intel-zmconv_c0_lnd)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_uwschu_rpen_10p0':[0,'Constance (Intel-uwschu_rpen)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_cldfrc_dp1_0p14':[0,'Constance (Intel-cldfrc_dp1)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_nu_p_1p0x10e14':[0,'Constance (Intel-nu_p)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_nu_9p0x10e14':[0,'Constance (Intel-nu)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_cldfrc_rhminh_p9':[0,'Constance (Intel-rhminh)'] \
             }
 
-cld_cases = {'cori/ne30_fc5_ndbg_cori_has_int_unsrtcol':[1,'Cori Has(Intel-NDBG)'], \
-                'cori/ne30_fc5_ndbg_cori_knl_int_unsrtcol':[1,'Cori KNL(Intel-NDBG)'], \
-                'cori/ne30_fc5_ndbg_cori_has_gnu_unsrtcol':[1,'Cori Has(GNU-NDBG)'], \
-                'cori/ne30_fc5_dbg_cori_has_int_unsrtcol':[1,'Cori Has(Intel-DBG)'], \
-                'cori/ne30_fc5_dbg_cori_knl_int_unsrtcol':[1,'Cori KNL(Intel-DBG)'], \
-                'cori/ne30_fc5_dbg_cori_has_gnu_unsrtcol':[1,'Cori Has(GNU-DBG)'], \
-                'titan/ne30_fc5_ndbg_titan_int_unsrtcol':[1,'Titan(Intel-NDBG)'], \
-                'titan/ne30_fc5_ndbg_titan_pgi_unsrtcol':[1,'Titan(PGI-NDBG) '], \
-                'titan/ne30_fc5_dbg_titan_pgi_unsrtcol':[1,'Titan(PGI-DBG) '], \
-                'constance/csmruns/ne30_fc5_ndbg_const_int_unsrtcol':[1,'Constance (Intel-NDBG)'], \
+cld_cases = {'cori/ne30_fc5_ndbg_cori_has_int_unsrtcol':[0,'Cori Has(Intel-NDBG)'], \
+                'cori/ne30_fc5_ndbg_cori_knl_int_unsrtcol':[0,'Cori KNL(Intel-NDBG)'], \
+                'cori/ne30_fc5_ndbg_cori_has_gnu_unsrtcol':[0,'Cori Has(GNU-NDBG)'], \
+                'cori/ne30_fc5_dbg_cori_has_int_unsrtcol':[0,'Cori Has(Intel-DBG)'], \
+                'cori/ne30_fc5_dbg_cori_knl_int_unsrtcol':[0,'Cori KNL(Intel-DBG)'], \
+                'cori/ne30_fc5_dbg_cori_has_gnu_unsrtcol':[0,'Cori Has(GNU-DBG)'], \
+                'titan/ne30_fc5_ndbg_titan_int_unsrtcol':[0,'Titan(Intel-NDBG)'], \
+                'titan/ne30_fc5_ndbg_titan_pgi_unsrtcol':[0,'Titan(PGI-NDBG) '], \
+                'titan/ne30_fc5_dbg_titan_pgi_unsrtcol':[0,'Titan(PGI-DBG) '], \
+                'constance/csmruns/ne30_fc5_ndbg_const_int_unsrtcol':[0,'Constance (Intel-NDBG)'], \
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol':[1,'Constance (Intel-DBG)'] \
             }
 
@@ -126,7 +133,8 @@ def compute_res(icase,ival,case_typ):
    #-------------------------------------------------------
    ipath_cntl_lp    = ipath_cntl
    cntl_casename_lp = cntl_casename
-   perturb_str_lp   = perturb_str
+   #perturb_str_lp   = perturb_str
+   perturb_str_lp   = perturb_str[1:len(perturb_str)]
 
    #-------------------------------------------------------
    #case_typ: cloud case
@@ -148,7 +156,8 @@ def compute_res(icase,ival,case_typ):
       ipert = -1
       for apert in perturb_str_lp: 
          ipert += 1
-         apert_cntl = apert
+         #apert_cntl = apert
+         apert_cntl =  perturb_str[0]
          if(case_typ == 'cloud'):
             apert_cntl = perturb_str[0] #'wopert' should be the cntl case for cloud cases
          #form case name
@@ -232,7 +241,7 @@ mxcld.fill(float("-inf"))
 
 
 #create an empty array with dims[# of tst_cases, # of inic conds, # of perts, # of check point vars]
-tst_res = np.empty([len(tst_cases),len(inic_list),len(perturb_str),len(var_list)])
+tst_res = np.empty([len(tst_cases),len(inic_list),len(perturb_str)-1,len(var_list)])
 cld_res = np.empty([len(cld_cases),len(inic_list),len(perturb_str)-1,len(var_list)]) #cntl case is 'wopert' in this case
 
 ax = pl.gca()
@@ -259,11 +268,7 @@ if (not chk_file_only) :
    print("Plots are being generated...")
    print(ctime())
    ax.fill_between(range(xmin, xmax), mncld, mxcld, facecolor='gray', lw=0, alpha=0.5 )
-   print(xmin)
-   print(xmax)
 
-   print(mncld)
-   print(mxcld)
    handles, labels = pl.gca().get_legend_handles_labels()
    labels, ids = np.unique(labels, return_index=True)
    handles = [handles[i] for i in ids]
