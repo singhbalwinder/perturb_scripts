@@ -5,7 +5,7 @@
 import ntpath
 from rmse_diff_var import rmse_diff_var
 from time import ctime
-import pylab as pl
+import pylab as plt
 import numpy as np
 import sys
 import pdb
@@ -26,7 +26,11 @@ single_inic = True
 time           = '00000'
 
 #suffix for variables to plot
-pltvar_sfx = 'NUM_A3_'
+#'QV_' ,'V_' , 'T_', 'S_', 'CLDLIQ_', 'CLDICE_', 'NUMLIQ_', 'NUMICE_', 'NUM_A1_', 'NUM_A2_', 'NUM_A3_']
+pltvar_sfx = ['QV_' ,'V_' , 'T_', 'S_', 'CLDLIQ_', 'CLDICE_', 'NUMLIQ_', 'NUMICE_', 'NUM_A1_', 'NUM_A2_', 'NUM_A3_']
+len_pltvar_sfx = len(pltvar_sfx)
+col_sbplt      = 2
+row_sbplt      = int((len_pltvar_sfx+1)/col_sbplt)
 
 #-------------------------------------------------------
 # Paths and test cases to plot
@@ -47,7 +51,7 @@ tst_cases = { 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_dstfac_p45':[0,
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_sol_factb_int_1p0':[0,'Constance (Intel-sol_fctb)'], \
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_zmconv_c0_ocn_0p0035':[0,'Constance (Intel-zmconv_c0_ocn)'], \
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_zmconv_c0_lnd_0p0035':[0,'Constance (Intel-zmconv_c0_lnd)'], \
-                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_uwschu_rpen_10p0':[0,'Constance (Intel-uwschu_rpen)'], \
+                 'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_uwshcu_rpen_10p0':[0,'Constance (Intel-uwschu_rpen)'], \
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_cldfrc_dp1_0p14':[0,'Constance (Intel-cldfrc_dp1)'], \
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_nu_p_1p0x10e14':[0,'Constance (Intel-nu_p)'], \
                  'constance/csmruns/ne30_fc5_dbg_const_int_unsrtcol_nu_9p0x10e14':[0,'Constance (Intel-nu)'], \
@@ -83,7 +87,7 @@ xlabel_file = 'xlabels_fc5_no_none.txt'
 if(rmse_or_diff == 0):
    ylabel = 'Maximum Error in the temperature (K) field'
 elif(rmse_or_diff == 1):
-   ylabel = 'Normalized RMSE Error [T(K)]'
+   ylabel = 'Normalized RMSE Error'
 
 ymin  = -1
 ymax  = 10.0
@@ -91,7 +95,7 @@ xmin  = 0
 clr   = ['b', 'g', 'r', 'c', 'm', 'y', 'k', [0.5,0.5,0.5]] # for each case
 mrk   = ['o','*','x','s']
 pert_lgnd = ['_wo','_P+','_P-']
-title = "Compared against "+cntl_case[cntl_case.keys()[0]][1]
+title = "Compared against "+cntl_case[cntl_case.keys()[0]][1]+" at time:"+ time
 
 #counters
 cld_ires = 0
@@ -104,14 +108,16 @@ imrk = 0
 #===================================================
 
 def check_fix_min(output):
-   if(all(iout <= 0.0 for iout in output)):
-      print("All diffs are <= zero , reseting last element to 1e-16")
-      output[-1] = 1.e-16
+   dim0 = output.shape[0]
+   for idim in range(dim0):
+      if(all(iout <= 0.0 for iout in output[idim,:])):
+         print("All diffs are <= zero , reseting last element to 1e-16")
+         output[idim,-1] = 1.e-16
 
-      for iout in output:
-         if(iout <= 0.0 ):
-            print("Diff/RMSE is <= zero , reseting element to 1e-16")
-            output[iout] = 1.e-16            
+         for iout in output[idim,:]:
+            if(iout <= 0.0 ):
+               print("Diff/RMSE is <= zero , reseting element to 1e-16")
+               output[idim,iout] = 1.e-16            
    return output
 
 
@@ -167,22 +173,28 @@ def compute_res(icase,ival,case_typ):
          ifile_cntl = ipath_cntl+'/'+tmp_case_name_cntl+'/'+acme_hist_dir+'/'+tmp_case_name_cntl+cam_hist_str+acond_2+'-'+time+'.nc'
          if(not chk_file_only):
             if(case_typ == 'cloud'):
-               output_tmp = rmse_diff_var(ifile, ifile_cntl, var_list, pltvar_sfx,rmse_or_diff)
+               output_tmp = rmse_diff_var(ifile, ifile_cntl, var_list, pltvar_sfx, rmse_or_diff)
                output     = check_fix_min(output_tmp)
-               cld_res[cld_ires,icond,ipert,0:len(var_list)]  = output
-               ax.semilogy(cld_res[cld_ires,icond,ipert,:],color=clr[iclr],linestyle='-',marker=mrk[imrk],label=ival[1], linewidth = 2, alpha = 0.7) 
+               cld_res[cld_ires,icond,ipert,0:len_pltvar_sfx,0:len_var_list]  = output
+               for isfx in range(len_pltvar_sfx):
+                  ax_sub = plt.subplot(row_sbplt,col_sbplt,isfx+1)
+                  ax_sub.semilogy(cld_res[cld_ires,icond,ipert,isfx,:],color=clr[iclr],linestyle='-',marker=mrk[imrk],label=ival[1], linewidth = 2, alpha = 0.7) 
+                  ax_sub.set_title(pltvar_sfx[isfx]) 
 
                #find min max for cloud hashed region
-               for iout in range(len(var_list)):
-                  if(mncld[iout] > output[iout]):
-                     mncld[iout] = output[iout]
-                  if(mxcld[iout] < output[iout]):
-                     mxcld[iout] = output[iout]                     
+               #for iout in range(len(var_list)):
+               #   if(mncld[iout] > output[iout]):
+               #      mncld[iout] = output[iout]
+               #   if(mxcld[iout] < output[iout]):
+               #      mxcld[iout] = output[iout]                     
             else:
-               output_tmp  = rmse_diff_var(ifile, ifile_cntl, var_list, pltvar_sfx,rmse_or_diff)         
+               output_tmp  = rmse_diff_var(ifile, ifile_cntl, var_list, pltvar_sfx, rmse_or_diff)         
                output     = check_fix_min(output_tmp)
-               tst_res[tst_ires,icond,ipert,0:len(var_list)]  = output
-               ax.semilogy(tst_res[tst_ires,icond,ipert,:],color=clr[iclr],linestyle='-',marker=mrk[imrk],label=ival[1], linewidth = 2, alpha = 0.7) 
+               tst_res[tst_ires,icond,ipert,0:len_pltvar_sfx,0:len_var_list]  = output
+               for isfx in range(len_pltvar_sfx):
+                  ax_sub = plt.subplot(row_sbplt,col_sbplt,isfx+1)
+                  ax_sub.semilogy(tst_res[tst_ires,icond,ipert,isfx,:],color=clr[iclr],linestyle='-',marker=mrk[imrk],label=ival[1], linewidth = 2, alpha = 0.7)
+                  ax_sub.set_title(pltvar_sfx[isfx]) 
 
             #icnt = 0
             #for iresult in res[ires,icond,ipert,0:len(var_list)]:
@@ -200,7 +212,7 @@ def compute_res(icase,ival,case_typ):
                print('Test file:'+ifile+' doesnt exists; exiting....')
                sys.exit()
             if ( not os.path.isfile(ifile_cntl)):
-               print('Test file:'+ifile_cntl+' doesnt exists; exiting....')
+               print('CNTL file:'+ifile_cntl+' doesnt exists; exiting....')
                sys.exit()
    if(case_typ == 'cloud'):
       cld_ires += 1
@@ -217,8 +229,9 @@ def compute_res(icase,ival,case_typ):
 with open(var_file, 'r') as fvar:
    var_list = fvar.readlines()
 fvar.close()
-var_list = map(str.strip,var_list)
-xmax = len(var_list)
+var_list     = map(str.strip,var_list)
+len_var_list = len(var_list)
+xmax         = len_var_list 
 
 #get xticklabel
 with open(xlabel_file, 'r') as flbl:
@@ -234,18 +247,18 @@ finic.close()
 if(single_inic):
    inic_list = inic_list[0:1] 
 
-mncld = np.empty(len(var_list))
-mxcld = np.empty(len(var_list))
+mncld = np.empty(len_var_list)
+mxcld = np.empty(len_var_list)
 mncld.fill(float("inf"))
 mxcld.fill(float("-inf"))
 
 
 #create an empty array with dims[# of tst_cases, # of inic conds, # of perts, # of check point vars]
-tst_res = np.empty([len(tst_cases),len(inic_list),len(perturb_str)-1,len(var_list)])
-cld_res = np.empty([len(cld_cases),len(inic_list),len(perturb_str)-1,len(var_list)]) #cntl case is 'wopert' in this case
+tst_res = np.empty([len(tst_cases),len(inic_list),len(perturb_str)-1,len_pltvar_sfx,len_var_list])
+cld_res = np.empty([len(cld_cases),len(inic_list),len(perturb_str)-1,len_pltvar_sfx,len_var_list]) #cntl case is 'wopert' in this case
 
-ax = pl.gca()
-axf = pl.gcf()
+ax = plt.gca()
+axf = plt.gcf()
 axf.set_facecolor('white') #set color of the plot
 
 ipath_cntl = cmn_path+'/'+cntl_case.keys()[0]
@@ -258,25 +271,27 @@ print('Control case is: '+cntl_casename)
 #pdb.set_trace()
 for icase_pth, ival in cld_cases.iteritems():
    compute_res(icase_pth,ival,'cloud')
+   #Bif (not chk_file_only) :
+      #Bax.fill_between(range(xmin, xmax), mncld, mxcld, facecolor='gray', lw=0, alpha=0.5 )
 
 for icase_pth, ival in tst_cases.iteritems():
    compute_res(icase_pth,ival, 'test')
 
 
-
+print(ctime())
 if (not chk_file_only) :
    print("Plots are being generated...")
-   print(ctime())
-   ax.fill_between(range(xmin, xmax), mncld, mxcld, facecolor='gray', lw=0, alpha=0.5 )
 
-   handles, labels = pl.gca().get_legend_handles_labels()
+   #Bax.fill_between(range(xmin, xmax), mncld, mxcld, facecolor='gray', lw=0, alpha=0.5 )
+
+   handles, labels = plt.gca().get_legend_handles_labels()
    labels, ids = np.unique(labels, return_index=True)
    handles = [handles[i] for i in ids]
-   pl.legend(handles, labels, loc='best')#, fontsize = 35)
-   pl.ylabel(ylabel)
-   pl.title(title)   
-   pl.savefig('data.png') 
-   pl.show()
+   plt.legend(handles, labels, loc='best')#, fontsize = 35)
+   plt.ylabel(ylabel)
+   plt.suptitle(title) 
+   #plt.savefig('data.png') 
+   plt.show()
 else:
     print("ALL files are present")
 
