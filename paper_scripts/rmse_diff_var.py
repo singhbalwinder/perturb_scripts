@@ -87,7 +87,7 @@ def rmse_diff_var(ifile_test, ifile_cntl,  var_list, var_suffix, rmse_or_diff, i
 
 
             #normalize by mean values of the field in the control case
-            mean_cntl = abs(np.mean(vcntl))
+            mean_cntl = np.mean(abs(vcntl))
             if(mean_cntl != 0.0):
                ret_arr[isfx,icntvar] = ret_arr[isfx,icntvar]/mean_cntl
             else:
